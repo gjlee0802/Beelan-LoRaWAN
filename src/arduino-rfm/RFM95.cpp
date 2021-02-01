@@ -257,7 +257,21 @@
     { 0xD8, 0xE0, 0x24 }, //Channel [5], 867.5 MHz / 61.035 Hz = 14213156 = 0xD8E024
     { 0xD8, 0xEC, 0xF1 }, //Channel [6], 867.7 MHz / 61.035 Hz = 14216433 = 0xD8ECF1
     { 0xD8, 0xF9, 0xBE }, //Channel [7], 867.9 MHz / 61.035 Hz = 14219710 = 0xD8F9BE
+    //The RX2 receive window uses a fixed frequency and data rate. The default parameters are 69.525 MHz / DR0 (SF12, 125 kHz)
     { 0xD9, 0x61, 0xBE }, // RX2 Receive channel 869.525 MHz / 61.035 Hz = 14246334 = 0xD961BE    
+  };
+#elif defined(EU_433)
+  static const PROGMEM unsigned char LoRa_Frequency[9][3] = {//[433.5 - 433.1] MHz
+    { 0x6C, 0x4B, 0x45 }, //Channel [0], 433.175 MHz / 61.035 Hz = 7097157 = 0x6C4B45
+    { 0x6C, 0x58, 0x12 }, //Channel [1], 433.375 MHz / 61.035 Hz = 7100434 = 0x6C5812
+    { 0x6C, 0x64, 0xDF }, //Channel [2], 433.575 MHz / 61.035 Hz = 7103711 = 0x6C64DF
+    { 0x6C, 0x71, 0xAC }, //Channel [3], 433.775 MHz / 61.035 Hz = 7106988 = 0x6C71AC
+    { 0x6C, 0x7E, 0x79 }, //Channel [4], 433.975 MHz / 61.035 Hz = 7110265 = 0x6C7E79
+    { 0x6C, 0x8B, 0x45 }, //Channel [5], 434.175 MHz / 61.035 Hz = 7113541 = 0x6C8B45
+    { 0x6C, 0x98, 0x12 }, //Channel [6], 434.375 MHz / 61.035 Hz = 7116818 = 0x6C9812
+    { 0x6C, 0xA4, 0xDF }, //Channel [7], 434.575 MHz / 61.035 Hz = 7120095 = 0x6CA4DF
+    //The RX2 receive window uses a fixed frequency and data rate. The default parameters are 434.665MHz / DR0 (SF12, 125 kHz).
+    { 0x6C, 0xAA, 0xA2 }, // RX2 Receive channel 434.665 MHz / 61.035 Hz = 7121570 = 0x6CAAA2    
   };
 #endif
 
@@ -402,7 +416,31 @@ static void RFM_Change_Datarate(unsigned char Datarate)
     RFM_change_SF_BW(7,0x09);
     break;
   }
-#else //EU_868 or AS_923
+#elif //EU_868 or AS_923
+  switch (Datarate) {
+  case 0x00:  // SF12BW125
+    RFM_change_SF_BW(12,0x07);
+    break;
+  case 0x01:  // SF11BW125
+    RFM_change_SF_BW(11,0x07);
+    break;
+  case 0x02:  // SF10BW125
+    RFM_change_SF_BW(10,0x07);
+    break;
+  case 0x03:  // SF9BW125
+    RFM_change_SF_BW(9,0x07);
+    break;
+  case 0x04:  // SF8BW125
+    RFM_change_SF_BW(8,0x07);
+    break;
+  case 0x05:  // SF7BW125
+    RFM_change_SF_BW(7,0x07);
+    break;
+  case 0x06:  // SF7BW250
+    RFM_change_SF_BW(7,0x08);
+    break;
+  }
+#else //EU_433
   switch (Datarate) {
   case 0x00:  // SF12BW125
     RFM_change_SF_BW(12,0x07);
@@ -448,6 +486,11 @@ static void RFM_Change_Channel(unsigned char Channel)
 #elif defined(EU_868)
   // in EU_868 v1.02 uses same freq for uplink and downlink
   if (Channel <= 0x08) 
+    for(unsigned char i = 0 ; i < 3 ; ++i)
+      RFM_Write(RFM_REG_FR_MSB + i, pgm_read_byte(&(LoRa_Frequency[Channel][i])));  
+#elif defined(EU_433)
+  // in EU_433 v1.02 uses same freq for uplink and downlink
+  if (Channel <= 0x07) 
     for(unsigned char i = 0 ; i < 3 ; ++i)
       RFM_Write(RFM_REG_FR_MSB + i, pgm_read_byte(&(LoRa_Frequency[Channel][i])));  
 #else   //US915 or AU_915
@@ -702,7 +745,11 @@ void RFM_Continuous_Receive(sSettings *LoRa_Settings)
   
 	//Change Datarate and channel.
   // This depends on regional parameters
-#ifdef EU_868
+#ifdef EU_868 
+  RFM_Change_Datarate(SF12BW125);
+  RFM_Change_Channel(CHRX2);
+#elif EU_434
+// The RX2 receive window uses a fixed frequency and data rate. 434.665MHz / DR0 (SF12, 125 kHz).
   RFM_Change_Datarate(SF12BW125);
   RFM_Change_Channel(CHRX2);
 #else
