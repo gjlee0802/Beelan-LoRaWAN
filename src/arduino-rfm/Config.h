@@ -8,8 +8,9 @@
 //LoRaWAN freq band
 //#define AS_923
 //#define EU_868
-#define US_915
+//#define US_915
 //#define AU_915
+#define EU_433
 
 #ifdef US_915
     //Select the subband youre working on

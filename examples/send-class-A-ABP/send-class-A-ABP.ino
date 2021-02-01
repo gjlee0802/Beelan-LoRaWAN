@@ -26,9 +26,9 @@ char outStr[255];
 byte recvStatus = 0;
 
 const sRFM_pins RFM_pins = {
-  .CS = 20,
-  .RST = 9,
-  .DIO0 = 0,
+  .CS = 15,
+  .RST = 16,
+  .DIO0 = 4,
   .DIO1 = 1,
   .DIO2 = 2,
   .DIO5 = 15,
@@ -36,7 +36,7 @@ const sRFM_pins RFM_pins = {
 
 void setup() {
   // Setup loraid access
-  Serial.begin(9600);
+  Serial.begin(115200);
   while(!Serial);
   if(!lora.init()){
     Serial.println("RFM95 not detected");
